@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Unit {
+  id           String       @id @default(uuid())
+  department   String
+  unitId       String
+  propertyName String
+  address      String
+  lat          Float
+  lng          Float
+  status       String       @default("Pending") // Pending, In Progress, Completed, Issue
+  assignments  Assignment[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Surveyor {
+  id          String       @id @default(uuid())
+  name        String
+  email       String?
+  assignments AssignmentSurveyor[]
+}
+
+model Assignment {
+  id          String       @id @default(uuid())
+  unitId      String
+  unit        Unit         @relation(fields: [unitId], references: [id])
+  date        DateTime
+  shift       String       // Morning, Afternoon
+  deadline    DateTime?
+  status      String       @default("Scheduled") // Scheduled, Completed, Failed
+  surveyors   AssignmentSurveyor[]
+  measurement Measurement?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model AssignmentSurveyor {
+  assignmentId String
+  surveyorId   String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id])
+  surveyor     Surveyor   @relation(fields: [surveyorId], references: [id])
+
+  @@id([assignmentId, surveyorId])
+}
+
+model Measurement {
+  id                     String     @id @default(uuid())
+  assignmentId           String     @unique
+  assignment             Assignment @relation(fields: [assignmentId], references: [id])
+  
+  // Áreas Internas
+  internalAdmin          Float @default(0)
+  internalRestroomAdmin  Float @default(0)
+  internalRestroomPublic Float @default(0)
+  internalIT             Float @default(0)
+  internalCirculation    Float @default(0)
+  internalCarpet         Float @default(0)
+  internalWood           Float @default(0)
+  internalCoveredPatio   Float @default(0)
+  internalService        Float @default(0)
+  internalStorage        Float @default(0)
+
+  // Áreas Externas
+  externalCirculation    Float @default(0)
+  externalParking        Float @default(0)
+  externalDebrisGreen    Float @default(0)
+
+  // Vidros
+  glassInternalMonthly   Float @default(0)
+  glassExternalMonthly   Float @default(0)
+  glassExternalQuarterly Float @default(0)
+  
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+}
