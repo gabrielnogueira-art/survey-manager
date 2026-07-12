@@ -60,7 +60,7 @@ export async function importUnits(formData: FormData) {
       }
       const pdfParse = require("pdf-parse");
       const data = await pdfParse(buffer);
-      const lines = data.text.split("\n").filter(l => l.trim().length > 0);
+      const lines = data.text.split("\n").filter((l: string) => l && l.trim().length > 0);
       
       // Heuristic parsing for PDF (Very basic, assumes 1 unit per line or specific format)
       for (const line of lines) {
