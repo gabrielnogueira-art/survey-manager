@@ -7,7 +7,7 @@ import { Map, Users, ClipboardList, LayoutDashboard } from "lucide-react";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Survey Manager",
+  title: "Gerenciador de atividades",
   description: "Gestão de equipe de levantamento",
 };
 
@@ -22,7 +22,7 @@ export default function RootLayout({
         <div className="layout">
           <aside className="sidebar">
             <div className="logo">
-              <h2>SurveyManager</h2>
+              <h2 style={{ fontSize: "1.2rem" }}>Gerenciador de atividades</h2>
             </div>
             <nav className="nav">
               <Link href="/" className="nav-item">

@@ -28,6 +28,7 @@ export default async function AssignmentsPage() {
     "Scheduled": assignments.filter(a => a.status === "Scheduled"),
     "In Progress": assignments.filter(a => a.status === "In Progress"),
     "Failed": assignments.filter(a => a.status === "Failed"),
+    "Review": assignments.filter(a => a.status === "Review"),
     "Completed": assignments.filter(a => a.status === "Completed")
   };
 

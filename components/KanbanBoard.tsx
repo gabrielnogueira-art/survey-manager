@@ -6,11 +6,12 @@ import { updateAssignmentStatus, createAssignment } from "@/app/actions/assignme
 
 type Assignment = any;
 
-const COLUMNS = ["Scheduled", "In Progress", "Failed", "Completed"];
+const COLUMNS = ["Scheduled", "In Progress", "Failed", "Review", "Completed"];
 const COLUMN_TITLES: Record<string, string> = {
   "Scheduled": "A Fazer",
   "In Progress": "Em Andamento",
   "Failed": "Impedimento",
+  "Review": "Revisão",
   "Completed": "Concluído"
 };
 

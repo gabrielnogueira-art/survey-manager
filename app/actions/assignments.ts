@@ -17,8 +17,9 @@ export async function updateAssignmentStatus(assignmentId: string, newStatus: st
     let unitStatus = assignment.unit.status;
     if (newStatus === "Scheduled") unitStatus = "Pending";
     if (newStatus === "In Progress") unitStatus = "In Progress";
-    if (newStatus === "Completed") unitStatus = "Completed";
     if (newStatus === "Failed") unitStatus = "Issue";
+    if (newStatus === "Review") unitStatus = "Review";
+    if (newStatus === "Completed") unitStatus = "Completed";
 
     await prisma.unit.update({
       where: { id: assignment.unitId },
