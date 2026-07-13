@@ -2,6 +2,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { sendEmail } from "@/lib/email";
 
 const prisma = new PrismaClient();
 
@@ -25,6 +26,22 @@ export async function updateAssignmentStatus(assignmentId: string, newStatus: st
       where: { id: assignment.unitId },
       data: { status: unitStatus }
     });
+
+    // Enviar e-mail de notificação de alteração de status
+    const surveyors = await prisma.assignmentSurveyor.findMany({
+      where: { assignmentId },
+      include: { surveyor: true }
+    });
+
+    for (const s of surveyors) {
+      if (s.surveyor.email) {
+        await sendEmail({
+          to: s.surveyor.email,
+          subject: `Status da Tarefa Atualizado: ${assignment.unit.propertyName}`,
+          html: `<p>Olá ${s.surveyor.name},</p><p>O status da tarefa no imóvel <strong>${assignment.unit.propertyName}</strong> foi alterado para: <strong>${newStatus}</strong>.</p><p>Acesse o painel para mais detalhes.</p>`
+        });
+      }
+    }
 
     revalidatePath("/assignments");
     revalidatePath("/");
@@ -60,6 +77,19 @@ export async function createAssignment(formData: FormData) {
       await prisma.assignmentSurveyor.createMany({
         data: surveyorsToConnect
       });
+      
+      // Notificar novos responsáveis
+      for (const stc of surveyorsToConnect) {
+        const surveyor = await prisma.surveyor.findUnique({ where: { id: stc.surveyorId } });
+        const unit = await prisma.unit.findUnique({ where: { id: unitId } });
+        if (surveyor && surveyor.email && unit) {
+          await sendEmail({
+            to: surveyor.email,
+            subject: `Nova Tarefa Atribuída: ${unit.propertyName}`,
+            html: `<p>Olá ${surveyor.name},</p><p>Você recebeu uma nova tarefa para realizar um levantamento no imóvel: <strong>${unit.propertyName}</strong>.</p><p><strong>Data:</strong> ${date}</p><p><strong>Turno:</strong> ${shift}</p><p>Acesse o painel para verificar os detalhes!</p>`
+          });
+        }
+      }
     }
 
     revalidatePath("/assignments");
