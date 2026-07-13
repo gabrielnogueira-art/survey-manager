@@ -98,3 +98,40 @@ export async function createAssignment(formData: FormData) {
     return { success: false, error: err.message };
   }
 }
+
+export async function updateAssignmentDetails(assignmentId: string, formData: FormData) {
+  const date = formData.get("date") as string;
+  const shift = formData.get("shift") as string;
+  const surveyorId1 = formData.get("surveyorId1") as string;
+  const surveyorId2 = formData.get("surveyorId2") as string;
+
+  try {
+    await prisma.assignment.update({
+      where: { id: assignmentId },
+      data: {
+        date: new Date(date),
+        shift
+      }
+    });
+
+    // Clear old surveyors
+    await prisma.assignmentSurveyor.deleteMany({
+      where: { assignmentId }
+    });
+
+    const surveyorsToConnect = [];
+    if (surveyorId1) surveyorsToConnect.push({ assignmentId, surveyorId: surveyorId1 });
+    if (surveyorId2 && surveyorId2 !== surveyorId1) surveyorsToConnect.push({ assignmentId, surveyorId: surveyorId2 });
+
+    if (surveyorsToConnect.length > 0) {
+      await prisma.assignmentSurveyor.createMany({
+        data: surveyorsToConnect
+      });
+    }
+
+    revalidatePath("/assignments");
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}

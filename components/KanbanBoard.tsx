@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { updateAssignmentStatus, createAssignment } from "@/app/actions/assignments";
+import { updateAssignmentStatus, createAssignment, updateAssignmentDetails } from "@/app/actions/assignments";
+import { PenSquare } from "lucide-react";
 
 type Assignment = any;
 
@@ -19,6 +20,7 @@ export default function KanbanBoard({ initialData, units, surveyors }: { initial
   const [data, setData] = useState(initialData);
   const [isMounted, setIsMounted] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -61,6 +63,13 @@ export default function KanbanBoard({ initialData, units, surveyors }: { initial
   async function handleCreate(formData: FormData) {
     await createAssignment(formData);
     setShowModal(false);
+  }
+
+  async function handleEdit(formData: FormData) {
+    if (editingAssignment) {
+      await updateAssignmentDetails(editingAssignment.id, formData);
+      setEditingAssignment(null);
+    }
   }
 
   if (!isMounted) return null;
@@ -113,8 +122,14 @@ export default function KanbanBoard({ initialData, units, surveyors }: { initial
                               ...provided.draggableProps.style
                             }}
                           >
-                            <div style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>
-                              {item.unit.propertyName}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+                              <div style={{ fontWeight: "bold" }}>{item.unit.propertyName}</div>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setEditingAssignment(item); }}
+                                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}
+                              >
+                                <PenSquare size={16} />
+                              </button>
                             </div>
                             <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
                               {new Date(item.date).toLocaleDateString()} - {item.shift}
@@ -194,6 +209,60 @@ export default function KanbanBoard({ initialData, units, surveyors }: { initial
                   Criar Tarefa
                 </button>
                 <button type="button" className="btn-primary" style={{ flex: 1, justifyContent: "center", background: "rgba(255,255,255,0.1)" }} onClick={() => setShowModal(false)}>
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editingAssignment && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 }}>
+          <div className="glass-panel" style={{ width: "400px", maxWidth: "90%" }}>
+            <h2 style={{ marginBottom: "1.5rem" }}>Editar Tarefa</h2>
+            <div style={{ marginBottom: "1rem", color: "var(--text-secondary)" }}>
+              <strong>Unidade:</strong> {editingAssignment.unit.propertyName}
+            </div>
+            <form action={handleEdit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              <div>
+                <label>Data</label>
+                <input type="date" name="date" className="input-field" defaultValue={new Date(editingAssignment.date).toISOString().split('T')[0]} required />
+              </div>
+              
+              <div>
+                <label>Turno</label>
+                <select name="shift" className="input-field" defaultValue={editingAssignment.shift} required>
+                  <option value="Morning">Manhã</option>
+                  <option value="Afternoon">Tarde</option>
+                </select>
+              </div>
+
+              <div>
+                <label>Responsável 1</label>
+                <select name="surveyorId1" className="input-field" defaultValue={editingAssignment.surveyors[0]?.surveyorId || ""}>
+                  <option value="">Selecione...</option>
+                  {surveyors.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label>Responsável 2 (Opcional)</label>
+                <select name="surveyorId2" className="input-field" defaultValue={editingAssignment.surveyors[1]?.surveyorId || ""}>
+                  <option value="">Selecione...</option>
+                  {surveyors.map(s => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+                <button type="submit" className="btn-primary" style={{ flex: 1, justifyContent: "center" }}>
+                  Salvar
+                </button>
+                <button type="button" className="btn-primary" style={{ flex: 1, justifyContent: "center", background: "rgba(255,255,255,0.1)" }} onClick={() => setEditingAssignment(null)}>
                   Cancelar
                 </button>
               </div>
